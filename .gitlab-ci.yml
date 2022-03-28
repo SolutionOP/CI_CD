@@ -1,0 +1,70 @@
+stages:
+  - build
+  - styleTest
+  - test
+  - telegram
+  - deploy
+
+Compile:
+  stage: build
+  tags:
+    - build
+  script:
+    - cd src/cat/
+    - make
+    - cd ../grep/
+    - make
+  artifacts:
+    paths:
+      - src/cat/s21_cat
+      - src/grep/s21_grep
+    expire_in: 30 days
+
+StyleTests:
+  stage: styleTest
+  tags:
+    - styleTest
+  script:
+    - cd src/cat/
+    - make check
+    - cd ../grep/
+    - make check
+
+InterrationalTests:
+  stage: test
+  tags:
+    - test
+  script:
+    - cd src/cat/
+    - make test
+    - cd ../grep/
+    - make test
+  after_script:
+    - echo "$CI_JOB_STATUS" > status
+  artifacts:
+    paths:
+      - ./status
+
+Telegram:
+  stage: telegram
+  when: always
+  tags:
+    - deploy
+  script:
+    - chmod +x telegram.sh
+    - export CI_PROJECT_NAME
+    - export CI_PROJECT_URL
+    - export CI_PIPELINE_ID
+    - export CI_COMMIT_REF_SLUG
+    - ./telegram.sh
+
+
+CopyProject:
+  stage: deploy
+  when: manual
+  tags:
+    - deploy
+  script:
+    - chmod +x script.sh
+    - chmod +x copy.sh
+    - ./script.sh
